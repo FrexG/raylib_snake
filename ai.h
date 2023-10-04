@@ -21,18 +21,17 @@
 
 // 4 head direction states and 2 food , 2 wall directions.
 // distances from head to food
-#define NUM_STATES (4 * 2 * 2)
+#define NUM_STATES (4 * 8 * 8)
 #define NUM_ACTIONS 4
-#define MAX_ITERATIONS 1000
+#define MAX_ITERATIONS 500
 typedef float QTable[NUM_STATES][NUM_ACTIONS];
 
 QTable qtable;
 
 float epsilon = 0.9f;
 const float min_eps = 0.001f;
-const float eps_discount = 0.9999f;
-const float lr = 0.01f;
-const float lr_discount = 0.9f;
+const float eps_discount = 0.999f;
+const float lr = 0.1f;
 
 void init_qtable() {
   for (int i = 0; i < NUM_STATES; ++i) {
@@ -59,18 +58,18 @@ int select_action(int state) {
   int best_action = 0;
   float best_q_value = qtable[state][best_action];
 
+  //  select random actioni (explorations)
+  int rand_action = rand() % NUM_ACTIONS;
+  float r = (float)rand() / RAND_MAX; 
+ if ( r < epsilon) {
+    return rand_action;
+  }
+
   for (int i = 0; i < NUM_ACTIONS; ++i) {
     if (qtable[state][i] > best_q_value) {
       best_q_value = qtable[state][i];
       best_action = i;
     }
-  }
-  //  select random actioni (explorations)
-  int rand_action = rand() % NUM_ACTIONS;
-  float r = (float)rand() / RAND_MAX; 
- if ( r < epsilon) {
-    printf("Random action %d\n",rand_action);
-    return rand_action;
   }
   return best_action;
 }

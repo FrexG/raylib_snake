@@ -23,6 +23,7 @@ typedef struct Snake {
 
 void init_snake();
 void init_food();
+int get_state();
 void render_snake();
 void render_food();
 void add_snake();
