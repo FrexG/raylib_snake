@@ -5,9 +5,13 @@
 #include <time.h>
 #include <unistd.h>
 
-#define WINDOW_DIM 800
+#define WINDOW_W 1200
+#define WINDOW_H 1000
+
 #define SEGMENT_DIM 40
-#define GRID_DIM (WINDOW_DIM / SEGMENT_DIM)
+#define GRID_DIM 800
+
+#define GRID_SIZE (GRID_DIM/ SEGMENT_DIM)
 
 typedef enum Dir { UP, DOWN, LEFT, RIGHT } Dir;
 typedef struct Food {
@@ -21,11 +25,12 @@ typedef struct Snake {
   Dir dir;
 } Snake;
 
-void init_snake();
-void init_food();
+void init_snake(int,int);
+void init_food(int,int);
 int get_state();
 void render_snake();
 void render_food();
+void render_grid();
 void add_snake();
 void move_snake();
 bool isEaten();

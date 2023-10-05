@@ -12,23 +12,26 @@ int episode = 1;
 int iterations = 0;
 int sleep_duration = 100000;
 
-
 int main(void) {
   printf("Snake ... Starting\n");
   // Initialize window
   srand(time(0));
 
   food = calloc(1, sizeof(Food));
-  init_snake();
-  init_food();
-  init_qtable();
+  int grid_x = 0;
+  int grid_y = (WINDOW_H / 2) - (GRID_DIM / 2);
 
-  InitWindow(WINDOW_DIM, WINDOW_DIM, "sNaKe");
+  init_snake(grid_x, grid_y);
+  init_food(grid_x, grid_y);
+  init_qtable(grid_x, grid_y);
+
+  InitWindow(WINDOW_W, WINDOW_H, "sNaKe");
   SetTargetFPS(60);
+
   current_state = get_state();
 
   while (!WindowShouldClose()) {
-    iterations+=1;
+    iterations += 1;
     int action = select_action(current_state);
     switch (action) {
     case 0:
@@ -56,27 +59,29 @@ int main(void) {
     }
     // drawing between Begin and End
     BeginDrawing();
-    ClearBackground(CLITERAL(Color){220, 220, 220, 255});
-    DrawText(TextFormat("Level %d", score), 10, 10, 30, BLACK);
-    DrawText(TextFormat("Eps %f", epsilon), 300, 10, 30, BLACK);
-    DrawText(TextFormat("Episode %d", episode), 600, 10, 30, BLACK);
-    DrawText(TextFormat("Iteration %d", iterations), 10,750, 30, BLACK);
+    ClearBackground(CLITERAL(Color){0, 0, 20, 55});
+    DrawText(TextFormat("Level %d", score), 900, 90, 30, WHITE);
+    DrawText(TextFormat("Eps %f", epsilon), 900, 150, 30, WHITE);
+    DrawText(TextFormat("Episode %d", episode), 900, 210, 30, WHITE);
+    DrawText(TextFormat("Iteration %d", iterations), 900,270, 30,WHITE);
 
-    move_snake();
+    move_snake(grid_x, grid_y);
     render_food();
     render_snake();
-    
+    render_grid(grid_x, grid_y);
+
     int new_state = get_state();
 
     if (isEaten()) {
-      init_food();
+      init_food(grid_x, grid_y);
       add_snake();
+
       score++;
       reward += 500;
       iterations = 0;
       update_q_value(current_state, action, new_state, reward);
     }
-    if (isCollided()) {
+    if (isCollided(grid_x, grid_y)) {
       reward += -500;
       update_q_value(current_state, action, new_state, reward);
       reward = 0;
@@ -84,102 +89,126 @@ int main(void) {
       iterations = 0;
       episode++;
 
-      epsilon = fmaxf(epsilon * eps_discount,min_eps);
-      free_snake();
-      init_food();
-      }
+      epsilon = fmaxf(epsilon * eps_discount, min_eps);
+      free_snake(grid_x, grid_y);
+      init_food(grid_x, grid_y);
+    }
 
-    if(!isEaten() && iterations > MAX_ITERATIONS){
-        reward +=-500;
-        update_q_value(current_state, action, new_state, reward);
-        reward = 0;
-        score = 0;
-        iterations = 0;
-        episode++;
-        epsilon = fmaxf(epsilon * eps_discount,min_eps);
-        free_snake();
-        init_food();
-      }
+    if (!isEaten() && iterations > MAX_ITERATIONS) {
+      reward += -500;
+      update_q_value(current_state, action, new_state, reward);
+      reward = 0;
+      score = 0;
+      iterations = 0;
+      episode++;
+      epsilon = fmaxf(epsilon * eps_discount, min_eps);
+      free_snake(grid_x, grid_y);
+      init_food(grid_x, grid_y);
+    }
     current_state = new_state;
 
     EndDrawing();
-    reward--;
-    update_q_value(current_state, action, new_state, reward);
     usleep(sleep_duration);
-  
-    }
+  }
   return 0;
 }
 
-int get_state(){
-    int head_dir = head->dir;
-    int food_dir;
+int get_state() {
+  int head_dir = head->dir;
+  int food_dir;
 
-    int w_f;
-    int w_l;
-    int w_r;
-    // food state
-    if(head->x - food->x > 0 && head->y - food->y > 0)
-        food_dir = 0;
+  int w_f;
+  int w_l;
+  int w_r;
 
-    if(head->x == food->x && head->y - food->y > 0)
-      food_dir = 1;
+  DrawText("Snake POV", 900, 450, 30,WHITE);
 
-    if(head->x - food->x < 0 && head->y - food->y > 0)
-      food_dir = 2;
+  DrawRectangle(900, 500, 40, 40, CLITERAL(Color){255, 255, 255, 155});
+  DrawRectangle(950, 500, 40, 40, CLITERAL(Color){255, 255, 255, 155});
+  DrawRectangle(1000, 500, 40, 40, CLITERAL(Color){255, 255, 255, 155});
+  DrawRectangle(900, 550, 40, 40, CLITERAL(Color){255, 255, 255, 155});
+  DrawRectangle(1000, 550, 40, 40, CLITERAL(Color){255, 255, 255, 155});
+  DrawRectangle(900, 600, 40, 40, CLITERAL(Color){255, 255, 255, 155});
+  DrawRectangle(950, 600, 40, 40, CLITERAL(Color){255, 255, 255, 155});
+  DrawRectangle(1000, 600, 40, 40, CLITERAL(Color){255, 255, 255, 155});
+  // food state
+  if (head->x - food->x > 0 && head->y - food->y > 0) {
 
-    if(head->x - food->x > 0 && head->y == food->y)
-      food_dir = 3;
-
-    if(head->x - food->x < 0 && head->y == food->y)
-      food_dir = 4;
-
-    if(head->x - food->x > 0 && head->y - food->y < 0)
-      food_dir = 5;
-    
-    if(head->x == food->x && head->y - food->y < 0)
-      food_dir = 6;
-
-    if(head->x - food->x < 0 && head->y - food->y < 0)
-      food_dir = 7;
-
-    /* Wall State
-     * ------------
-     * Wall direction depends on the movement direction
-     * of the head 
-     * ------------
-     * */
-    if(head_dir == UP){
-      w_f = (head->y == 0)?1:0;
-      w_l = (head->x == 0)?1:0;
-      w_r = (head->x+SEGMENT_DIM == WINDOW_DIM)?1:0;
-    }
-
-    if(head_dir == DOWN){
-      w_f = (head->y+SEGMENT_DIM == WINDOW_DIM)?1:0;
-      w_l = (head->x+SEGMENT_DIM == WINDOW_DIM)?1:0;
-      w_r = (head->x == 0)?1:0;
-    }
-    
-    if(head_dir == LEFT){
-      w_f = (head->x == 0)?1:0;
-      w_l = (head->y+SEGMENT_DIM == WINDOW_DIM)?1:0;
-      w_r = (head->y == 0)?1:0;
-    }
-    
-    if(head_dir == RIGHT){
-      w_f = (head->x+SEGMENT_DIM == WINDOW_DIM)?1:0;
-      w_l = (head->y == 0)?1:0;
-      w_r = (head->y+SEGMENT_DIM == WINDOW_DIM)?1:0;
-    }
-    
-
-    return 64*head_dir + 8*food_dir + 4*w_f + 2*w_l + w_r; 
+    DrawRectangle(900, 500, 40, 40, CLITERAL(Color){0, 0, 255, 155});
+    food_dir = 0;
   }
 
-void init_snake() {
-  int x = rand() % (GRID_DIM / 2) * SEGMENT_DIM;
-  int y = rand() % (GRID_DIM / 2) * SEGMENT_DIM;
+  if (head->x == food->x && head->y - food->y > 0) {
+    DrawRectangle(950, 500, 40, 40, CLITERAL(Color){0, 0, 255, 155});
+    food_dir = 1;
+  }
+  if (head->x - food->x < 0 && head->y - food->y > 0) {
+    DrawRectangle(1000, 500, 40, 40, CLITERAL(Color){0, 0, 255, 155});
+    food_dir = 2;
+  }
+
+  if (head->x - food->x > 0 && head->y == food->y) {
+    DrawRectangle(900, 550, 40, 40, CLITERAL(Color){0, 0, 255, 155});
+    food_dir = 3;
+  }
+
+  if (head->x - food->x < 0 && head->y == food->y) {
+    DrawRectangle(1000, 550, 40, 40, CLITERAL(Color){0, 0, 255, 155});
+    food_dir = 4;
+  }
+
+  if (head->x - food->x > 0 && head->y - food->y < 0) {
+    DrawRectangle(900, 600, 40, 40, CLITERAL(Color){0, 0, 255, 155});
+    food_dir = 5;
+  }
+
+  if (head->x == food->x && head->y - food->y < 0) {
+    DrawRectangle(950, 600, 40, 40, CLITERAL(Color){0, 0, 255, 155});
+    food_dir = 6;
+  }
+
+  if (head->x - food->x < 0 && head->y - food->y < 0) {
+    DrawRectangle(1000, 600, 40, 40, CLITERAL(Color){0, 0, 255, 155});
+    food_dir = 7;
+  }
+
+  /* Wall State
+   * ------------
+   * Wall direction depends on the movement direction
+   * of the head
+   * ------------
+   * */
+  if (head_dir == UP) {
+    w_f = (head->y == 0) ? 1 : 0;
+    w_l = (head->x == 0) ? 1 : 0;
+    w_r = (head->x + SEGMENT_DIM == GRID_DIM) ? 1 : 0;
+  }
+
+  if (head_dir == DOWN) {
+    w_f = (head->y + SEGMENT_DIM == GRID_DIM) ? 1 : 0;
+    w_l = (head->x + SEGMENT_DIM == GRID_DIM) ? 1 : 0;
+    w_r = (head->x == 0) ? 1 : 0;
+  }
+
+  if (head_dir == LEFT) {
+    w_f = (head->x == 0) ? 1 : 0;
+    w_l = (head->y + SEGMENT_DIM == GRID_DIM) ? 1 : 0;
+    w_r = (head->y == 0) ? 1 : 0;
+  }
+
+  if (head_dir == RIGHT) {
+    w_f = (head->x + SEGMENT_DIM == GRID_DIM) ? 1 : 0;
+    w_l = (head->y == 0) ? 1 : 0;
+    w_r = (head->y + SEGMENT_DIM == GRID_DIM) ? 1 : 0;
+  }
+
+  return 64 * head_dir + 8 * food_dir + 4 * w_f + 2 * w_l + w_r;
+}
+
+void init_snake(int grid_x, int grid_y) {
+
+  int x = ((rand() % GRID_SIZE/4) * SEGMENT_DIM) + grid_x;
+  int y = ((rand() % GRID_SIZE/4) * SEGMENT_DIM) + grid_y;
 
   Snake *new = calloc(1, sizeof(Snake));
   new->x = x;
@@ -191,7 +220,7 @@ void init_snake() {
   return;
 }
 
-void init_food() {
+void init_food(int grid_x, int grid_y) {
   bool not_valid;
   int x, y;
   Snake *current;
@@ -199,8 +228,8 @@ void init_food() {
     current = head;
     not_valid = true;
 
-    x = rand() % (GRID_DIM - 1) * SEGMENT_DIM;
-    y = rand() % (GRID_DIM - 1) * SEGMENT_DIM;
+    x = (rand() % (GRID_SIZE - 1) * SEGMENT_DIM) + grid_x;
+    y = (rand() % (GRID_SIZE - 1) * SEGMENT_DIM) + grid_y;
 
     while (current != NULL) {
       if (x == current->x && y == current->y)
@@ -261,21 +290,21 @@ void move_snake() {
   switch (head->dir) {
   case UP:
     if (head->y == 0)
-      head->y = WINDOW_DIM;
+      head->y = GRID_DIM;
     head->y -= SEGMENT_DIM;
     break;
   case DOWN:
-    if (head->y == WINDOW_DIM)
+    if (head->y == GRID_DIM)
       head->y = -1 * SEGMENT_DIM;
     head->y += SEGMENT_DIM;
     break;
   case LEFT:
     if (head->x == 0)
-      head->x = WINDOW_DIM;
+      head->x = GRID_DIM;
     head->x -= SEGMENT_DIM;
     break;
   case RIGHT:
-    if (head->x == WINDOW_DIM)
+    if (head->x == GRID_DIM)
       head->x = -1 * SEGMENT_DIM;
     head->x += SEGMENT_DIM;
     break;
@@ -300,59 +329,70 @@ void move_snake() {
 void render_snake() {
   Snake *current = head;
   while (current != NULL) {
-    DrawRectangle(current->x, current->y, SEGMENT_DIM, SEGMENT_DIM, RED);
+    DrawRectangle(current->x, current->y, SEGMENT_DIM, SEGMENT_DIM, GREEN);
     current = current->next;
   }
   return;
 }
 void render_food() {
-  DrawRectangle(food->x, food->y, SEGMENT_DIM, SEGMENT_DIM, BLUE);
+  DrawRectangle(food->x, food->y, SEGMENT_DIM, SEGMENT_DIM, RED);
+  return;
+}
+
+void render_grid(int grid_x, int grid_y) {
+  // Draw horizontal grids
+  DrawRectangle(grid_x, grid_y, GRID_DIM, 1, WHITE);
+
+  DrawRectangle(grid_x + GRID_DIM, grid_y, 1, GRID_DIM, WHITE);
+
+  DrawRectangle(grid_x, grid_y + GRID_DIM, GRID_DIM, 1, WHITE);
+
   return;
 }
 
 bool isEaten() {
-  if (head->x == food->x && head->y == food->y){
+  if (head->x == food->x && head->y == food->y) {
     return true;
-    }
+  }
   return false;
 }
-bool isCollided() {
+bool isCollided(int grid_x, int grid_y) {
 
   if (head->next != NULL && head->x == tail->x && head->y == tail->y)
     return true;
 
-  if(head->dir == UP)
-      if(head->y < 0)
-        return true;
+  if (head->dir == UP)
+    if (head->y <= grid_y)
+      return true;
 
-  if(head->dir == DOWN)
-      if(head->y+SEGMENT_DIM > WINDOW_DIM)
-        return true;
+  if (head->dir == DOWN)
+    if (head->y + SEGMENT_DIM >= GRID_DIM + grid_y)
+      return true;
 
-  if(head->dir == LEFT)
-      if(head->x < 0)
-        return true;
+  if (head->dir == LEFT)
+    if (head->x <= grid_x)
+      return true;
 
-  if(head->dir == RIGHT)
-      if(head->x+SEGMENT_DIM > WINDOW_DIM)
-        return true;
+  if (head->dir == RIGHT)
+    if (head->x + SEGMENT_DIM >= GRID_DIM + grid_x)
+      return true;
 
   Snake *current = head->next;
   while (current != NULL) {
-    if (head->x == current->x && head->y == current->y){
+    if (head->x == current->x && head->y == current->y) {
       return true;
-      }
+    }
     current = current->next;
   }
   return false;
 }
-void free_snake() {
+void free_snake(int grid_x, int grid_y) {
   Snake *current = head;
   while (current != NULL) {
     Snake *s = current->next;
     free(current);
     current = s;
   }
-  init_snake();
+  init_snake(grid_x, grid_y);
   return;
 }

@@ -2,7 +2,7 @@
 /*
  * Define Environment:
  *`State Space`: [Position of the head, position of the food, direcction of the
- snake]
+ snake, direction of the walls]
  *`Action Space`: The four possible directions of the sanke movnt.
  *`Reward funciton`: Positive reward for eating food , negative reward for
  hitting body.
@@ -19,7 +19,7 @@
   - a': next action
  */
 
-// 4 head direction states and 2 food , 2 wall directions.
+// 4 head direction states and 8 food directions relative to the head , 3 wall directions.
 // distances from head to food
 #define NUM_STATES (4 * 8 * 8)
 #define NUM_ACTIONS 4
