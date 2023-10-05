@@ -1,5 +1,5 @@
 # Classic Snake in C with model free Reinforcement Learning (Q-learning)
-https://github.com/FrexG/raylib_snake/assets/25264637/749e66d7-14c1-4e0e-a41f-9b58221b2bae
+https://github.com/FrexG/raylib_snake/assets/25264637/f71fa41f-1284-4944-9097-f3ebcbd83d54
 ### Requirements
 - [raylib](https://www.raylib.com/)
 - [make](https://www.gnu.org/software/make/manual/make.html)
